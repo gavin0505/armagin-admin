@@ -2,23 +2,34 @@ import request from '@/utils/request'
 
 export function login(data) {
   return request({
-    url: '/vue-admin-template/user/login',
+    url: '/user/login/doLogin',
     method: 'post',
     data
   })
 }
 
-export function getInfo(token) {
+export function getInfo(data) {
   return request({
-    url: '/vue-admin-template/user/info',
-    method: 'get',
-    params: { token }
+    url: '/user/token/getUserInfoByToken',
+    method: 'post',
+    data
   })
 }
 
-export function logout() {
+export function logout(data) {
   return request({
-    url: '/vue-admin-template/user/logout',
-    method: 'post'
+    url: '/user/login/doLogout',
+    method: 'post',
+    data
   })
 }
+
+// 注册
+export function register(data) {
+  return request({
+    url: '/user/register/doRegister',
+    method: 'post',
+    data
+  })
+}
+
