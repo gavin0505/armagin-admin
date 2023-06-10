@@ -105,15 +105,15 @@ export default {
       if (regex.test(value)) {
         callback()
       } else {
-        callback(new Error('用户名应由：4到16位的（字母，数字，下划线，减号）组成'))
+        callback(new Error('用户名长度4-16位，必须由[字母，数字，下划线，减号]组成'))
       }
     }
     const validatePassword = (rule, value, callback) => {
-      let regex = /(?!^(\d+|[a-zA-Z]+|[~!@#$%^&*()_.]+)$)^[\w~!@#$%^&*()_.]{8,16}$/
+      let regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,16}$/
       if (regex.test(value)) {
         callback()
       } else {
-        callback(new Error('密码长度8-16位，且至少需要包含以下两种：字母，数字，特殊符号'))
+        callback(new Error('密码长度8-16位，必须包含大小写字母和数字的组合，可以使用特殊字符'))
       }
     }
     const validateEmail = (rule, value, callback) => {
