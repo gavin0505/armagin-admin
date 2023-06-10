@@ -6,6 +6,7 @@ const getDefaultState = () => {
   return {
     token: getToken(),
     name: '',
+    roles: []
   }
 }
 
@@ -20,6 +21,10 @@ const mutations = {
   },
   SET_NAME: (state, name) => {
     state.name = name
+  },
+  //state.role的提交
+  SET_ROLES: (state, roles) => {
+    state.roles = roles
   }
 }
 
@@ -47,9 +52,9 @@ const actions = {
       getInfo({token: state.token}).then(response => {
         const {code, data} = response
         if (code !== '200') {
-          return reject('Verification failed, please Login again.')
+          return reject('验证失败，请重新登录')
         }
-
+        commit('SET_ROLES', data.role)
         commit('SET_NAME', data.username)
         resolve(data)
       }).catch(error => {
@@ -59,12 +64,13 @@ const actions = {
   },
 
   // user logout
-  logout({ commit, state }) {
+  logout({commit, state}) {
     return new Promise((resolve, reject) => {
       logout({token: state.token}).then(() => {
         removeToken() // must remove  token  first
         resetRouter()
         commit('RESET_STATE')
+        commit('SET_ROLES', [])
         resolve()
       }).catch(error => {
         reject(error)
@@ -73,13 +79,14 @@ const actions = {
   },
 
   // remove token
-  resetToken({ commit }) {
+  resetToken({commit}) {
     return new Promise(resolve => {
       removeToken() // must remove  token  first
       commit('RESET_STATE')
+      commit('SET_ROLES', [])
       resolve()
     })
-  }
+  },
 }
 
 export default {
@@ -88,4 +95,3 @@ export default {
   mutations,
   actions
 }
-

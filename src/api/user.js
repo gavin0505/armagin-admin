@@ -33,3 +33,18 @@ export function register(data) {
   })
 }
 
+export function getRegisterVerifyCode(data) {
+  return request({
+    url: '/user/register/getVerifyCode',
+    method: 'post',
+    data
+  })
+}
+
+// 验证token
+export function isLogin(token) {
+  return request({
+    url: '/user/login/ifLogin/' + token,
+    method: 'get',
+  })
+}

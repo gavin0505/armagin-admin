@@ -1,11 +1,26 @@
 <template>
   <div class="login-container">
-    <el-form ref="registerForm" :model="registerForm" :rules="loginRules" class="login-form" auto-complete="on"
+    <el-form ref="registerForm" :model="registerForm" :rules="registerRules" class="login-form" auto-complete="on"
              label-position="left">
 
       <div class="title-container">
-        <h3 class="title">Armagin短链接平台</h3>
+        <h3 class="title">注册</h3>
       </div>
+
+      <el-form-item prop="email">
+        <span class="svg-container">
+          <i class="el-icon-message"/>
+        </span>
+        <el-input
+          ref="username"
+          v-model="registerForm.email"
+          placeholder="邮箱"
+          name="email"
+          type="text"
+          tabindex="1"
+          auto-complete="on"
+        />
+      </el-form-item>
 
       <el-form-item prop="username">
         <span class="svg-container">
@@ -14,7 +29,7 @@
         <el-input
           ref="username"
           v-model="registerForm.username"
-          placeholder="Username"
+          placeholder="用户名"
           name="username"
           type="text"
           tabindex="1"
@@ -31,7 +46,7 @@
           ref="password"
           v-model="registerForm.password"
           :type="passwordType"
-          placeholder="Password"
+          placeholder="密码"
           name="password"
           tabindex="2"
           auto-complete="on"
@@ -42,73 +57,102 @@
         </span>
       </el-form-item>
 
-      <!--  todo 验证码改造  -->
       <el-form-item prop="verifyCode">
         <span class="svg-container">
-          <svg-icon icon-class="password"/>
+          <i class="el-icon-key"/>
         </span>
         <el-input
-          :key="passwordType"
-          ref="password"
-          v-model="registerForm.password"
-          :type="passwordType"
-          placeholder="Password"
-          name="password"
+          v-model="registerForm.verifyCode"
+          placeholder="验证码"
+          name="verifyCode"
+          type="password"
           tabindex="2"
           auto-complete="on"
-          @keyup.enter.native="handleRegister"
         />
-        <span class="show-pwd" @click="showPwd">
-          <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'"/>
+        <span class="show-pwd">
+          <el-button type="primary"
+                     @click="getVerifyCode()"
+                     v-if="!sendMsgDisabled">获取验证码
+          </el-button>
+          <el-button @click="getVerifyCode()"
+                     disabled
+                     v-if="sendMsgDisabled">{{ time + '秒后获取' }}
+          </el-button>
         </span>
       </el-form-item>
 
       <el-button :loading="loading" type="success" style="width:100%;margin-bottom:30px;"
-                 @click.native.prevent="handleRegister()">注册
+                 @click="handleRegister()">注册
       </el-button>
 
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
-      </div>
-      <el-button type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="toLogin">登录</el-button>
+      <div class="tips"></div>
+      <el-button type="primary" style="width:100%;margin-bottom:30px;" @click="toLogin">登录</el-button>
 
     </el-form>
+
   </div>
 </template>
 
 <script>
-import {validUsername} from '@/utils/validate'
+import {getRegisterVerifyCode, register} from "@/api/user";
 
 export default {
   name: 'Register',
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
-      } else {
+      // 4到16位（字母，数字，下划线，减号）
+      let regex = /^[a-zA-Z0-9_-]{4,16}$/
+      if (regex.test(value)) {
         callback()
+      } else {
+        callback(new Error('用户名应由：4到16位的（字母，数字，下划线，减号）组成'))
       }
     }
     const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
-        callback(new Error('The password can not be less than 6 digits'))
-      } else {
+      let regex = /(?!^(\d+|[a-zA-Z]+|[~!@#$%^&*()_.]+)$)^[\w~!@#$%^&*()_.]{8,16}$/
+      if (regex.test(value)) {
         callback()
+      } else {
+        callback(new Error('密码长度8-16位，且至少需要包含以下两种：字母，数字，特殊符号'))
+      }
+    }
+    const validateEmail = (rule, value, callback) => {
+      let regex = /^[A-Za-z0-9\-_]+[A-Za-z0-9\.\-_]*[A-Za-z0-9\-_]+@[A-Za-z0-9]+[A-Za-z0-9\.\-_]*(\.[A-Za-z0-9\.\-_]+)*[A-Za-z0-9]+\.[A-Za-z0-9]+[A-Za-z0-9\.\-_]*[A-Za-z0-9]+$/
+
+      if (regex.test(value)) {
+      } else {
+        callback('邮箱格式有误')
+      }
+    }
+    const validateVerifyCode = (rule, value, callback) => {
+      let regex = /^\d{6}$/
+      if (regex.test(value)) {
+        callback()
+      } else {
+        callback(new Error('验证码应为6位数字'))
       }
     }
     return {
       registerForm: {
-        username: 'Apdo',
-        password: '123456'
+        email: '',
+        username: '',
+        password: '',
+        verifyCode: '',
+        type: 1
       },
-      loginRules: {
+      registerRules: {
         username: [{required: true, trigger: 'blur', validator: validateUsername}],
-        password: [{required: true, trigger: 'blur', validator: validatePassword}]
+        password: [{required: true, trigger: 'blur', validator: validatePassword}],
+        email: [{required: true, trigger: 'blur', validator: validateEmail}],
+        verifyCode: [{required: true, trigger: 'blur', validator: validateVerifyCode}],
+
       },
       loading: false,
       passwordType: 'password',
-      redirect: undefined
+      redirect: undefined,
+      time: 60, // 发送验证码倒计时
+      sendMsgDisabled: false
+
     }
   },
   watch: {
@@ -131,24 +175,48 @@ export default {
       })
     },
     handleRegister() {
-      this.$refs.registerForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$store.dispatch('user/register', this.registerForm).then(() => {
-            this.$router.push({path: this.redirect || '/'})
-            this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
-        } else {
-          console.log('error submit!!')
-          return false
-        }
+      register({
+        email: this.registerForm.email, username: this.registerForm.username,
+        password: this.registerForm.password.trim(), code: this.registerForm.verifyCode
+      })
+        .then(response => {
+          if (response.code !== '200') {
+            this.$message.error("验证码发送失败，请联系管理员")
+            return;
+          }
+          this.$message.success("注册成功！")
+          this.$router.push('/login')
+        }).catch(() => {
       })
     },
     toLogin() {
       this.$router.push('/login')
+    },
+    getVerifyCode() {
+      getRegisterVerifyCode({type: this.registerForm.type, account: this.registerForm.email})
+        .then(response => {
+          if (response.code !== '200') {
+            this.$message.error("验证码发送失败，请联系管理员")
+            return;
+          }
+          this.$message.success("验证码发送成功，请查收邮件！")
+          this.countdown()
+        }).catch(() => {
+      })
+    },
+
+    countdown() {
+      const that = this
+      that.sendMsgDisabled = true
+      const interval = window.setInterval(function () {
+        if ((that.time--) <= 0) {
+          that.time = 60
+          that.sendMsgDisabled = false
+          window.clearInterval(interval)
+        }
+      }, 1000)
     }
+
   }
 }
 </script>
